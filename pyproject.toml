@@ -1,0 +1,32 @@
+[project]
+name = "brownfield-cartographer"
+version = "0.1.0"
+description = "Brownfield Cartographer: architecture intelligence for unfamiliar production repositories"
+authors = [{ name = "Forward Deployed Engineer" }]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "tree-sitter>=0.21.0",
+    "tree-sitter-languages>=1.8.0",
+    "sqlglot>=23.0.0",
+    "networkx>=3.2.1",
+    "pydantic>=2.6.0",
+    "GitPython>=3.1.43",
+    "typer>=0.12.3",
+    "rich>=13.7.0",
+    "python-dotenv>=1.0.1",
+    "tqdm>=4.66.2",
+    "numpy>=2.2.6",
+    "scipy>=1.15.3",
+]
+
+[project.scripts]
+cartographer = "src.cli:app"
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

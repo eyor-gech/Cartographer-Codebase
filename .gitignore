@@ -1,0 +1,6 @@
+cartography-venv/
+.venv/
+__pycache__/
+*.pyc
+.cartography/*.json
+test/*
