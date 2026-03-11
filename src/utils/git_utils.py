@@ -5,14 +5,14 @@ from typing import Dict
 from git import Repo, InvalidGitRepositoryError, NoSuchPathError
 
 
-def change_velocity_last_30d(repo_path: Path) -> Dict[str, int]:
-    """Return a mapping of file path to number of commits touching it in last 30 days."""
+def change_velocity(repo_path: Path, days: int = 30) -> Dict[str, int]:
+    """Return a mapping of file path to number of commits touching it in the given window."""
     try:
         repo = Repo(repo_path, search_parent_directories=True)
     except (InvalidGitRepositoryError, NoSuchPathError):
         return {}
 
-    since = datetime.utcnow() - timedelta(days=30)
+    since = datetime.utcnow() - timedelta(days=days)
     velocities: Dict[str, int] = {}
     try:
         for commit in repo.iter_commits("HEAD", since=since):
@@ -22,3 +22,8 @@ def change_velocity_last_30d(repo_path: Path) -> Dict[str, int]:
         # Be resilient to traversal issues
         return velocities
     return velocities
+
+
+# Backward compatibility alias
+def change_velocity_last_30d(repo_path: Path) -> Dict[str, int]:
+    return change_velocity(repo_path, days=30)
