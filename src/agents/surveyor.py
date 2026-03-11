@@ -6,23 +6,37 @@ import networkx as nx
 from src.analyzers.tree_sitter_analyzer import TreeSitterAnalyzer
 from src.graph.knowledge_graph import KnowledgeGraph
 from src.models.nodes import ModuleNode
-from src.utils.git_utils import change_velocity_last_30d
+from src.utils.git_utils import change_velocity
 from src.utils.logging_utils import get_logger
+
+DEFAULT_VELOCITY_WINDOW_DAYS = 30
+DEFAULT_DEAD_CODE_THRESHOLD = 0
+DEFAULT_PAGERANK_THRESHOLD = 0.05
 
 
 class Surveyor:
     """Builds structural module graph using Tree-sitter and git signals."""
 
-    def __init__(self, repo_path: Path, graph: KnowledgeGraph):
+    def __init__(
+        self,
+        repo_path: Path,
+        graph: KnowledgeGraph,
+        velocity_window_days: int = DEFAULT_VELOCITY_WINDOW_DAYS,
+        dead_code_threshold: int = DEFAULT_DEAD_CODE_THRESHOLD,
+        pagerank_threshold: float = DEFAULT_PAGERANK_THRESHOLD,
+    ):
         self.repo_path = repo_path
         self.graph = graph
         self.analyzer = TreeSitterAnalyzer()
         self.logger = get_logger(__name__)
         self.git_change_velocity: Dict[str, int] = {}
+        self.velocity_window_days = velocity_window_days
+        self.dead_code_threshold = dead_code_threshold
+        self.pagerank_threshold = pagerank_threshold
 
     def analyze(self):
         self.logger.info("Surveyor scanning repository for Python modules")
-        self.git_change_velocity = change_velocity_last_30d(self.repo_path)
+        self.git_change_velocity = change_velocity(self.repo_path, days=self.velocity_window_days)
 
         module_exports: Dict[str, List[str]] = {}
         module_import_targets: Dict[str, List[str]] = {}
@@ -89,7 +103,10 @@ class Surveyor:
                         imported_modules.add(module)
 
         for module, symbols in exports.items():
-            if symbols and module not in imported_modules:
+            imported_count = 0
+            if module in imported_modules:
+                imported_count += 1
+            if symbols and imported_count <= self.dead_code_threshold:
                 if module in self.graph.graph.nodes:
                     self.graph.graph.nodes[module]["is_dead_code_candidate"] = True
 
