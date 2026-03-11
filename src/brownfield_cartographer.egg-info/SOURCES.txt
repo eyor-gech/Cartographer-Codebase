@@ -28,3 +28,4 @@ src/utils/__init__.py
 src/utils/file_utils.py
 src/utils/git_utils.py
 src/utils/logging_utils.py
+tests/test_analyzers.py
