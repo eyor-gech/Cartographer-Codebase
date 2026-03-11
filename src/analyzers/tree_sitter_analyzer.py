@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 import logging
-
+import sqlglot
+import yaml
 from tree_sitter import Parser
 from tree_sitter_languages import get_language
 
@@ -35,7 +36,7 @@ class LanguageRouter:
 
 
 class TreeSitterAnalyzer:
-    """Extracts structural facts using Tree-sitter."""
+    """Extracts structural facts using Tree-sitter and language-aware helpers."""
 
     def __init__(self):
         self.router = LanguageRouter()
@@ -79,18 +80,116 @@ class TreeSitterAnalyzer:
         return {"imports": imports, "functions": functions, "classes": classes}
 
     def analyze(self, path: Path) -> Dict:
-        if path.suffix != ".py":
-            return {}
+        suffix = path.suffix.lower()
         try:
             content = path.read_bytes()
         except Exception as exc:
             self.logger.error("Failed reading %s: %s", path, exc)
-            return {}
+            return {"type": "unknown", "error": str(exc)}
+
+        if suffix == ".py":
+            try:
+                data = self.analyze_python(path, content)
+                data["type"] = "python"
+                return data
+            except Exception as exc:
+                self.logger.error("Tree-sitter parse failure for %s: %s", path, exc)
+                return {"type": "python", "error": str(exc)}
+        if suffix == ".sql":
+            return self.analyze_sql(path, content)
+        if suffix in (".yml", ".yaml"):
+            return self.analyze_yaml(path, content)
+        if suffix in (".js", ".ts"):
+            return self.analyze_js_ts(path, content)
+        return {"type": "unknown"}
+
+    # SQL
+    def analyze_sql(self, path: Path, content: bytes) -> Dict:
+        sql_text = content.decode("utf-8", errors="ignore")
+        tables_read = set()
+        tables_written = set()
+        ctes = set()
+        parsed = None
         try:
-            return self.analyze_python(path, content)
+            parsed = sqlglot.parse_one(sql_text, error_level="ignore")
+            if parsed:
+                for table in parsed.find_all(sqlglot.exp.Table):
+                    if table.this:
+                        tables_read.add(table.this.sql())
+                for cte in parsed.find_all(sqlglot.exp.CTE):
+                    if cte.this and hasattr(cte.this, "this"):
+                        ctes.add(cte.this.this.sql())
+                insert = parsed.find(sqlglot.exp.Insert)
+                if insert and insert.this:
+                    tables_written.add(insert.this.sql())
+                create = parsed.find(sqlglot.exp.Create)
+                if create and create.this:
+                    tables_written.add(create.this.sql())
         except Exception as exc:
-            self.logger.error("Tree-sitter parse failure for %s: %s", path, exc)
-            return {}
+            self.logger.error("SQL parse failure for %s: %s", path, exc)
+
+        # dbt ref() detection
+        if parsed:
+            for ref in parsed.find_all(sqlglot.exp.Func):
+                if getattr(ref, "name", "").lower() == "ref":
+                    args = ref.expressions
+                    if args:
+                        arg = args[0]
+                        tables_read.add(arg.name if hasattr(arg, "name") else arg.sql())
+
+        return {
+            "type": "sql",
+            "tables_read": sorted(tables_read),
+            "tables_written": sorted(tables_written),
+            "ctes": sorted(ctes),
+        }
+
+    # YAML
+    def analyze_yaml(self, path: Path, content: bytes) -> Dict:
+        try:
+            doc = yaml.safe_load(content) or {}
+        except Exception as exc:
+            self.logger.error("YAML parse failure for %s: %s", path, exc)
+            return {"type": "yaml", "error": str(exc)}
+
+        top_keys = list(doc.keys()) if isinstance(doc, dict) else []
+        metadata = {"models": [], "sources": [], "tests": []}
+        if isinstance(doc, dict):
+            metadata["models"] = list(doc.get("models", {}).keys()) if isinstance(doc.get("models"), dict) else doc.get("models", []) or []
+            metadata["sources"] = list(doc.get("sources", {}).keys()) if isinstance(doc.get("sources"), dict) else doc.get("sources", []) or []
+            metadata["tests"] = list(doc.get("tests", {}).keys()) if isinstance(doc.get("tests"), dict) else doc.get("tests", []) or []
+        return {
+            "type": "yaml",
+            "top_keys": top_keys,
+            **metadata,
+        }
+
+    # JS/TS
+    def analyze_js_ts(self, path: Path, content: bytes) -> Dict:
+        parser = self.router.get_parser(path)
+        if not parser:
+            return {"type": "javascript", "imports": [], "exports": []}
+        try:
+            tree = parser.parse(content)
+        except Exception as exc:
+            self.logger.error("JS/TS parse failure for %s: %s", path, exc)
+            return {"type": "javascript", "error": str(exc)}
+        root = tree.root_node
+        imports: List[str] = []
+        exports: List[str] = []
+
+        def text(node):
+            return content[node.start_byte : node.end_byte].decode("utf-8", errors="ignore")
+
+        for child in root.children:
+            try:
+                if child.type == "import_statement":
+                    imports.append(text(child))
+                if child.type in ("export_statement", "export_clause"):
+                    exports.append(text(child))
+            except Exception:
+                continue
+        return {"type": "javascript", "imports": imports, "exports": exports}
 
     def _extract_signature(self, func_node, content: bytes, decorators: Optional[List[str]] = None) -> str:
         params = func_node.child_by_field_name("parameters")
