@@ -18,10 +18,10 @@ uv pip install -e .
 
 ## Usage
 
-Analyze a repository (example uses the `jaffle_shop` dbt project):
+Analyze a repository (example uses the `jaffle-shop` dbt project):
 
 ```bash
-cartographer analyze ./jaffle_shop
+cartographer analyze ./jaffle-shop
 ```
 
 Artifacts will be written to `.cartography/` in the target repository:
