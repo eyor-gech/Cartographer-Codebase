@@ -1,0 +1,65 @@
+Metadata-Version: 2.4
+Name: brownfield-cartographer
+Version: 0.1.0
+Summary: Brownfield Cartographer: architecture intelligence for unfamiliar production repositories
+Author: Forward Deployed Engineer
+License-Expression: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: tree-sitter>=0.21.0
+Requires-Dist: tree-sitter-languages>=1.8.0
+Requires-Dist: sqlglot>=23.0.0
+Requires-Dist: networkx>=3.2.1
+Requires-Dist: pydantic>=2.6.0
+Requires-Dist: GitPython>=3.1.43
+Requires-Dist: typer>=0.12.3
+Requires-Dist: rich>=13.7.0
+Requires-Dist: python-dotenv>=1.0.1
+Requires-Dist: tqdm>=4.66.2
+Requires-Dist: numpy>=2.2.6
+Requires-Dist: scipy>=1.15.3
+
+# Brownfield Cartographer
+
+Brownfield Cartographer is a forward-deployed engineering instrument that turns an unfamiliar production repository into architecture intelligence in under 72 hours.
+
+It produces structural graphs, data lineage graphs, and architectural signals so new engineers can immediately answer:
+
+- What is the architecture of this system?
+- Where does data originate and where does it flow?
+- Which modules are most critical or risky?
+- Where is business logic concentrated?
+
+## Installation
+
+```bash
+uv venv
+uv pip install -e .
+```
+
+## Usage
+
+Analyze a repository (example uses the `jaffle_shop` dbt project):
+
+```bash
+cartographer analyze ./jaffle_shop
+```
+
+Artifacts will be written to `.cartography/` in the target repository:
+
+- `module_graph.json` – structural module dependency graph
+- `lineage_graph.json` – dataset lineage graph
+- `architecture_signals.json` – critical modules, risk modules, dead code candidates
+
+## Architecture
+
+The interim system is a two-agent pipeline:
+
+- **Surveyor** – structural analysis via Tree-sitter and Git change velocity
+- **Hydrologist** – SQL lineage reconstruction via sqlglot
+
+Graphs are stored in a NetworkX-backed `KnowledgeGraph` with typed nodes and edges. An `ImportanceEngine` ranks modules using PageRank, betweenness, and change velocity.
+
+## Status
+
+This is an interim implementation designed for rapid deployment and extensibility. Future agents (Semanticist, Archivist) can plug into the orchestrator.
