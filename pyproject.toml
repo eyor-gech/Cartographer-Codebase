@@ -2,7 +2,7 @@
 name = "brownfield-cartographer"
 version = "0.1.0"
 description = "Brownfield Cartographer: architecture intelligence for unfamiliar production repositories"
-authors = [{ name = "Forward Deployed Engineer" }]
+authors = [{ name = "Eyor Getachew" }]
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,6 +19,8 @@ dependencies = [
     "tqdm>=4.66.2",
     "numpy>=2.2.6",
     "scipy>=1.15.3",
+    "PyYAML>=6.0.1",
+    "pytest>=7.4.3",
 ]
 
 [project.scripts]
