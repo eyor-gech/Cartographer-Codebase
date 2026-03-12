@@ -40,7 +40,8 @@ class ImportanceEngine:
             attrs["importance_score"] = importance_score
 
             record = {
-                "module": node,
+                #"module": node,
+                "node": node,
                 "pagerank": pr,
                 "betweenness": bt,
                 "change_velocity": vel_raw,
@@ -61,5 +62,8 @@ class ImportanceEngine:
             "risk_modules": risk_sorted,
             "dead_code_candidates": dead,
         }
-        self.logger.info("Importance engine computed signals for %d modules", len(critical_sorted))
+        # self.logger.info("Importance engine computed signals for %d modules", len(critical_sorted))
+        self.logger.info(
+            "Importance engine computed signals for %d graph nodes", len(critical_sorted)
+        )
         return signals
