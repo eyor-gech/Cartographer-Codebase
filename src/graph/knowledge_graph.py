@@ -54,3 +54,10 @@ class KnowledgeGraph:
         kg = cls(kind=kind)
         kg.graph = json_graph.node_link_graph(payload)
         return kg
+    def merge(self, other: "KnowledgeGraph"):
+        """Merge another KnowledgeGraph into this one."""
+        for node, attrs in other.graph.nodes(data=True):
+            self.graph.add_node(node, **attrs)
+
+        for src, dst, attrs in other.graph.edges(data=True):
+            self.graph.add_edge(src, dst, **attrs)
