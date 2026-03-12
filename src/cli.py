@@ -9,6 +9,7 @@ from shutil import rmtree
 
 from src.orchestrator import Orchestrator
 from src.utils.logging_utils import get_logger
+from src.graph.knowledge_graph import KnowledgeGraph
 
 console = Console()
 app = typer.Typer(help="Brownfield Cartographer CLI")
@@ -60,24 +61,19 @@ def analyze(repo_input: str = typer.Argument(..., help="Path to a local repo or 
 
     step_times = {}
 
-    # Wrap Orchestrator steps
-    import functools
-
-    # Save original run to wrap
-    original_run = orchestrator.run
-
     def timed_run():
         from src.agents.surveyor import Surveyor
         from src.agents.hydrologist import Hydrologist
         from src.intelligence.importance_engine import ImportanceEngine
         from src.utils.file_utils import write_json
-        from pathlib import Path
         import time
         from rich.progress import Progress, SpinnerColumn, TextColumn
 
         orchestrator.logger.info("Starting orchestration pipeline")
-        module_graph = orchestrator.module_graph if hasattr(orchestrator, "module_graph") else KnowledgeGraph(kind="module")
-        lineage_graph = orchestrator.lineage_graph if hasattr(orchestrator, "lineage_graph") else KnowledgeGraph(kind="lineage")
+
+        module_graph = KnowledgeGraph(kind="module")
+        lineage_graph = KnowledgeGraph(kind="lineage")
+        knowledge_graph = KnowledgeGraph(kind="unified")
 
         with Progress(
             SpinnerColumn(),
@@ -85,51 +81,80 @@ def analyze(repo_input: str = typer.Argument(..., help="Path to a local repo or 
             transient=True,
             console=orchestrator.console,
         ) as progress:
+
             progress.add_task("Repository discovery", total=None)
 
+            # -----------------------
             # Surveyor
+            # -----------------------
             t0 = time.perf_counter()
+
             surveyor = Surveyor(orchestrator.repo_path, module_graph)
+
             try:
                 surveyor.analyze()
             except Exception as e:
                 orchestrator.logger.error("Surveyor encountered an error: %s", e)
+
             step_times["Surveyor analysis"] = time.perf_counter() - t0
             progress.update(0, description=f"Surveyor done ({step_times['Surveyor analysis']:.2f}s)")
 
+            # -----------------------
             # Hydrologist
+            # -----------------------
             t0 = time.perf_counter()
+
             hydrologist = Hydrologist(orchestrator.repo_path, lineage_graph)
+
             try:
                 hydrologist.analyze()
             except Exception as e:
                 orchestrator.logger.error("Hydrologist encountered an error: %s", e)
+
             step_times["Hydrologist analysis"] = time.perf_counter() - t0
             progress.update(0, description=f"Hydrologist done ({step_times['Hydrologist analysis']:.2f}s)")
 
+            # -----------------------
+            # Merge graphs
+            # -----------------------
+            knowledge_graph.merge(module_graph)
+            knowledge_graph.merge(lineage_graph)
+
+            # -----------------------
             # Importance Engine
+            # -----------------------
             t0 = time.perf_counter()
-            importance_engine = ImportanceEngine(module_graph, surveyor.git_change_velocity)
+
+            importance_engine = ImportanceEngine(knowledge_graph, surveyor.git_change_velocity)
+
             try:
                 signals = importance_engine.compute_signals()
             except Exception as e:
                 orchestrator.logger.error("Importance computation failed: %s", e)
                 signals = {}
+
             step_times["Importance computation"] = time.perf_counter() - t0
             progress.update(0, description=f"Importance ranking done ({step_times['Importance computation']:.2f}s)")
 
+            # -----------------------
             # Serialization
+            # -----------------------
             t0 = time.perf_counter()
+
             orchestrator.cartography_dir = cartography_dir
             orchestrator.cartography_dir.mkdir(parents=True, exist_ok=True)
+
             write_json(orchestrator.cartography_dir / "module_graph.json", module_graph.export_json())
             write_json(orchestrator.cartography_dir / "lineage_graph.json", lineage_graph.export_json())
+            write_json(orchestrator.cartography_dir / "knowledge_graph.json", knowledge_graph.export_json())
             write_json(orchestrator.cartography_dir / "architecture_signals.json", signals)
+
             step_times["Serialization"] = time.perf_counter() - t0
             progress.update(0, description=f"Artifacts serialized ({step_times['Serialization']:.2f}s)")
 
     # Run timed orchestrator
     timed_run()
+
     console.print(f"[green]Orchestration completed in {time.perf_counter() - start_orch:.2f}s[/green]")
 
     # --- Print step-level timing ---
