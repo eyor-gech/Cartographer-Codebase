@@ -1,0 +1,23 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "module",
+      "path": ".github\\workflows\\scripts\\dbt_cloud_run_job.py",
+      "language": "python",
+      "complexity_score": 0.0,
+      "change_velocity_30d": 0,
+      "pagerank": 1.0,
+      "betweenness": 0.0,
+      "is_dead_code_candidate": false,
+      "last_modified": "1773234955.3150513",
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": ".github\\workflows\\scripts\\dbt_cloud_run_job.py"
+    }
+  ],
+  "edges": [],
+  "graph_kind": "module"
+}
