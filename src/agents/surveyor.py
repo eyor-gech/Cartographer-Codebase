@@ -8,6 +8,7 @@ from src.graph.knowledge_graph import KnowledgeGraph
 from src.models.nodes import ModuleNode
 from src.utils.git_utils import change_velocity
 from src.utils.logging_utils import get_logger
+from src.utils.trace_logger import TraceLogger
 
 DEFAULT_VELOCITY_WINDOW_DAYS = 30
 DEFAULT_DEAD_CODE_THRESHOLD = 0
@@ -24,6 +25,7 @@ class Surveyor:
         velocity_window_days: int = DEFAULT_VELOCITY_WINDOW_DAYS,
         dead_code_threshold: int = DEFAULT_DEAD_CODE_THRESHOLD,
         pagerank_threshold: float = DEFAULT_PAGERANK_THRESHOLD,
+        trace: TraceLogger | None = None,
     ):
         self.repo_path = repo_path
         self.graph = graph
@@ -33,9 +35,12 @@ class Surveyor:
         self.velocity_window_days = velocity_window_days
         self.dead_code_threshold = dead_code_threshold
         self.pagerank_threshold = pagerank_threshold
+        self.trace = trace
 
-    def analyze(self):
+    def analyze(self, include_paths: set[str] | None = None):
         self.logger.info("Surveyor scanning repository for Python modules")
+        if self.trace:
+            self.trace.log("Surveyor", "analyze_start", evidence_source=str(self.repo_path), analysis_method="static")
         self.git_change_velocity = change_velocity(self.repo_path, days=self.velocity_window_days)
 
         module_exports: Dict[str, List[str]] = {}
@@ -44,6 +49,8 @@ class Surveyor:
         for path in self.repo_path.rglob("*.py"):
             try:
                 rel = str(path.relative_to(self.repo_path))
+                if include_paths is not None and rel not in include_paths:
+                    continue
                 analysis = self.analyzer.analyze(path)
 
                 imports = analysis.get("imports", [])
@@ -81,6 +88,14 @@ class Surveyor:
         self._mark_dead_code(module_exports, module_import_targets)
         self._mark_cycles()
         self._mark_high_velocity_modules()
+        if self.trace:
+            self.trace.log(
+                "Surveyor",
+                "analyze_end",
+                evidence_source=str(self.repo_path),
+                analysis_method="static",
+                extra={"modules": len(module_exports)},
+            )
 
         # compute graph centrality
         self._compute_centrality()
