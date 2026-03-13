@@ -1,13 +1,13 @@
 import textwrap
 from pathlib import Path
 
-from analyzers.tree_sitter_analyzer import TreeSitterAnalyzer
+from src.analyzers.tree_sitter_analyzer import TreeSitterAnalyzer
 
 
 def write_file(tmp_path: Path, filename: str, content: str) -> Path:
     """Create a temporary file with provided content."""
     file_path = tmp_path / filename
-    file_path.write_text(textwrap.dedent(content))
+    file_path.write_text(textwrap.dedent(content), encoding="utf-8")
     return file_path
 
 
