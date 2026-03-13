@@ -1,15 +1,22 @@
 from pathlib import Path
 from typing import Optional
-from shutil import rmtree
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from src.agents.surveyor import Surveyor
 from src.agents.hydrologist import Hydrologist
+from src.agents.archivist import Archivist
 from src.graph.knowledge_graph import KnowledgeGraph
 from src.intelligence.importance_engine import ImportanceEngine
 from src.utils.logging_utils import get_logger
 from src.utils.file_utils import write_json
+from datetime import datetime
+
+from src.utils.trace_logger import TraceLogger
+from src.utils.state_utils import AnalysisState, current_state_for_repo
+from src.utils.git_utils import changed_files_since
+from src.analyzers.dead_code_detector import detect_dead_code_candidates
+from src.agents.semanticist import Semanticist
 
 
 class Orchestrator:
@@ -21,20 +28,40 @@ class Orchestrator:
         self.console = console or Console()
         self.logger = get_logger(__name__)
 
-    def run(self):
+    def run(self, *, incremental: bool = False):
         self.logger.info("Starting orchestration pipeline")
         module_graph = KnowledgeGraph(kind="module")
         lineage_graph = KnowledgeGraph(kind="lineage")
+        knowledge_graph = KnowledgeGraph(kind="knowledge")
 
-        # Determine subfolder name from repo folder
-        repo_name = self.repo_path.name
-        base_cartography_dir = Path("C:/Users/Eyor.G/Documents/Tenx/Cartographer-Codebase/.cartography")
-        self.cartography_dir = base_cartography_dir / repo_name
-
-        # If folder exists, remove it first
-        if self.cartography_dir.exists():
-            rmtree(self.cartography_dir)
         self.cartography_dir.mkdir(parents=True, exist_ok=True)
+        trace = TraceLogger(self.cartography_dir / "cartography_trace.jsonl")
+        state_path = self.cartography_dir / "state.json"
+        previous_state = AnalysisState.load(state_path)
+        include_paths = None
+        if incremental and previous_state and previous_state.last_run_utc:
+            try:
+                since = datetime.fromisoformat(previous_state.last_run_utc.replace("Z", "+00:00"))
+                include_paths = changed_files_since(self.repo_path, since)
+                trace.log(
+                    "Orchestrator",
+                    "incremental_detected",
+                    evidence_source=str(state_path),
+                    analysis_method="static",
+                    extra={"changed_files": len(include_paths)},
+                )
+            except Exception as exc:
+                trace.log(
+                    "Orchestrator",
+                    "incremental_failed",
+                    confidence=0.3,
+                    evidence_source=str(state_path),
+                    analysis_method="static",
+                    extra={"error": str(exc)},
+                )
+                include_paths = None
+
+        trace.log("Orchestrator", "run_start", evidence_source=str(self.repo_path), analysis_method="static")
 
         with Progress(
             SpinnerColumn(),
@@ -43,20 +70,33 @@ class Orchestrator:
             console=self.console,
         ) as progress:
             progress.add_task("Repository discovery", total=None)
-            surveyor = Surveyor(self.repo_path, module_graph)
-            hydrologist = Hydrologist(self.repo_path, lineage_graph)
+            surveyor = Surveyor(self.repo_path, module_graph, trace=trace)
+            hydrologist = Hydrologist(self.repo_path, lineage_graph, trace=trace)
 
             progress.update(0, description="Surveyor: structural analysis")
             try:
-                surveyor.analyze()
+                py_only = {p for p in include_paths} if include_paths is not None else None
+                if py_only is not None:
+                    py_only = {p for p in py_only if p.endswith(".py")}
+                surveyor.analyze(include_paths=py_only)
             except Exception as exc:
                 self.logger.error("Surveyor encountered an error: %s", exc)
+                trace.log("Surveyor", "analyze_error", confidence=0.2, evidence_source=str(self.repo_path), analysis_method="static", extra={"error": str(exc)})
 
             progress.update(0, description="Hydrologist: lineage analysis")
             try:
-                hydrologist.analyze()
+                hydrologist.analyze(include_paths=include_paths)
             except Exception as exc:
                 self.logger.error("Hydrologist encountered an error: %s", exc)
+                trace.log("Hydrologist", "analyze_error", confidence=0.2, evidence_source=str(self.repo_path), analysis_method="static", extra={"error": str(exc)})
+
+            progress.update(0, description="Merging graphs")
+            try:
+                knowledge_graph.merge(module_graph)
+                knowledge_graph.merge(lineage_graph)
+            except Exception as exc:
+                self.logger.error("Graph merge failed: %s", exc)
+                trace.log("Orchestrator", "merge_error", confidence=0.2, evidence_source=str(self.repo_path), analysis_method="static", extra={"error": str(exc)})
 
             progress.update(0, description="Importance ranking")
             importance_engine = ImportanceEngine(module_graph, surveyor.git_change_velocity)
@@ -65,10 +105,57 @@ class Orchestrator:
             except Exception as exc:
                 self.logger.error("Importance computation failed: %s", exc)
                 signals = {}
+                trace.log("Orchestrator", "importance_error", confidence=0.2, evidence_source=str(self.repo_path), analysis_method="static", extra={"error": str(exc)})
+
+            progress.update(0, description="Dead code (v2)")
+            try:
+                signals["dead_code_candidates_v2"] = detect_dead_code_candidates(module_graph)
+            except Exception as exc:
+                trace.log("Orchestrator", "dead_code_v2_error", confidence=0.3, evidence_source=str(self.repo_path), analysis_method="static", extra={"error": str(exc)})
+
+            progress.update(0, description="Semanticist: purpose (offline)")
+            try:
+                semanticist = Semanticist(trace=trace)
+                for item in (signals.get("critical_modules") or [])[:15]:
+                    node = item.get("module") or item.get("node")
+                    if not node:
+                        continue
+                    p = self.repo_path / node
+                    if not p.exists() or not p.is_file():
+                        continue
+                    result = semanticist.infer_module_purpose(p)
+                    if node in module_graph.graph.nodes:
+                        module_graph.graph.nodes[node]["purpose_statement"] = result.get("purpose_statement")
+                        module_graph.graph.nodes[node]["docstring_drift"] = result.get("drift")
+            except Exception as exc:
+                trace.log("Semanticist", "purpose_error", confidence=0.2, evidence_source=str(self.repo_path), analysis_method="LLM", extra={"error": str(exc)})
 
             progress.update(0, description="Serializing artifacts")
-            write_json(self.cartography_dir / "module_graph.json", module_graph.export_json())
-            write_json(self.cartography_dir / "lineage_graph.json", lineage_graph.export_json())
-            write_json(self.cartography_dir / "architecture_signals.json", signals)
+            try:
+                write_json(self.cartography_dir / "module_graph.json", module_graph.export_json())
+                write_json(self.cartography_dir / "lineage_graph.json", lineage_graph.export_json())
+                write_json(self.cartography_dir / "knowledge_graph.json", knowledge_graph.export_json())
+                write_json(self.cartography_dir / "architecture_signals.json", signals)
+            except Exception as exc:
+                self.logger.error("Artifact serialization failed: %s", exc)
+                trace.log("Orchestrator", "serialize_error", confidence=0.2, evidence_source=str(self.cartography_dir), analysis_method="static", extra={"error": str(exc)})
 
+            progress.update(0, description="Archivist: generating docs")
+            try:
+                Archivist(console=self.console, trace=trace).generate(
+                    self.cartography_dir,
+                    module_graph=module_graph,
+                    lineage_graph=lineage_graph,
+                    knowledge_graph=knowledge_graph,
+                    architecture_signals=signals,
+                )
+            except Exception as exc:
+                self.logger.error("Archivist failed: %s", exc)
+                trace.log("Archivist", "generate_error", confidence=0.2, evidence_source=str(self.cartography_dir), analysis_method="static", extra={"error": str(exc)})
+
+        trace.log("Orchestrator", "run_end", evidence_source=str(self.cartography_dir), analysis_method="static")
+        try:
+            current_state_for_repo(self.repo_path).save(state_path)
+        except Exception:
+            pass
         self.logger.info("Analysis complete. Artifacts written to %s", self.cartography_dir)
