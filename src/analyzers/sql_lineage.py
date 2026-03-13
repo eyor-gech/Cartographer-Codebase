@@ -10,7 +10,7 @@ from sqlglot import expressions as exp
 class SQLLineageAnalyzer:
     """Uses sqlglot to derive dataset dependencies from SQL files."""
 
-    DIALECTS = ["postgres", "bigquery", "snowflake"]
+    DIALECTS = ["postgres", "bigquery", "snowflake", "duckdb"]
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ class SQLLineageAnalyzer:
     def parse_dependencies(self, sql: str) -> Tuple[Set[str], Set[str]]:
         sources: Set[str] = set()
         targets: Set[str] = set()
+        ctes: Set[str] = set()
 
         # Extract dbt ref() dependencies
         for match in re.findall(r'ref\(["\']([\w\.\-]+)["\']\)', sql):
@@ -56,10 +57,17 @@ class SQLLineageAnalyzer:
         if not parsed:
             return sources, targets
 
+        # CTE names (avoid counting as physical reads)
+        for cte in parsed.find_all(exp.CTE):
+            name = cte.alias_or_name
+            if name:
+                ctes.add(name)
+
         # Extract source tables
         for table in parsed.find_all(exp.Table):
             try:
-                sources.add(table.name)
+                if table.name and table.name not in ctes:
+                    sources.add(table.name)
             except Exception:
                 continue
 
@@ -103,9 +111,13 @@ class SQLLineageAnalyzer:
         if not targets:
             targets = {path.stem}
 
+        line_count = sql.count("\n") + 1 if sql else 1
         return {
             "source_tables": sorted(sources),
             "target_tables": sorted(targets),
             "source_file": str(path),
-            "line_range": None,
+            "line_range": [1, line_count],
+            # Backward compatibility keys (older callers)
+            "sources": sorted(sources),
+            "targets": sorted(targets),
         }
