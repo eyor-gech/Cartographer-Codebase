@@ -5,3 +5,7 @@ __pycache__/
 .cartography/*.json
 test/*
 .pytest_cache/
+lib/
+src/brownfield_cartographer.egg-info/
+.cartography2/
+src/utils/visualization.py
