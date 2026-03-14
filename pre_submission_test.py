@@ -7,9 +7,9 @@ from src.graph.knowledge_graph import KnowledgeGraph, GraphKind
 from src.utils.visualization import generate_dashboard
 
 # ----------------------------
-# CONFIGURE PATHS
+# CONFIGURE PATHS 
 # ----------------------------
-repo_path = Path(r"C:\Users\Eyor.G\Documents\Tenx\Cartographer-Codebase")#Path(r"C:\Users\Eyor.G\Documents\Tenx\Cartographer-Codebase\test\jaffle-shop")  # Replace with your repo path
+repo_path = Path(r"C:\Users\Eyor.G\Documents\Tenx\Cartographer-Codebase\test\jaffle-shop")  # Replace with your repo path
 cartography_dir = repo_path / ".cartography2"
 cartography_dir.mkdir(parents=True, exist_ok=True)
 
