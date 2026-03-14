@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Dict, Any, Optional
 
 
-@dataclass
 class TraceLogger:
-    """Append-only JSONL trace log for auditability across agents."""
+    """
+    Append-only JSONL trace log used for auditing agent decisions.
+    """
 
-    path: Path
+    def __init__(self, path: Path):
+
+        self.path = path
+
+        self.path.parent.mkdir(parents=True, exist_ok=True)
 
     def log(
         self,
@@ -23,18 +27,19 @@ class TraceLogger:
         analysis_method: str = "static",
         extra: Optional[Dict[str, Any]] = None,
     ) -> None:
+
         entry: Dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "agent_name": agent_name,
+            "agent": agent_name,
             "action": action,
             "confidence": float(confidence),
-            "evidence_source": evidence_source,
-            "analysis_method": analysis_method,
+            "evidence": evidence_source,
+            "method": analysis_method,
         }
+
         if extra:
             entry.update(extra)
 
-        self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
 
+            f.write(json.dumps(entry) + "\n")
