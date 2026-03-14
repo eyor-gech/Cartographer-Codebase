@@ -5,3 +5,4 @@ class GraphKind(str, Enum):
     MODULE = "module"
     LINEAGE = "lineage"
     UNIFIED = "unified"
+    KNOWLEDGE = "knowledge"
