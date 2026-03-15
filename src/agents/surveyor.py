@@ -78,9 +78,12 @@ class Surveyor:
                 continue
 
         # build import edges
+        known_modules = set(module_import_targets.keys()) | {
+            n for n, a in self.graph.graph.nodes(data=True) if a.get("type") == "module"
+        }
         for src, imports in module_import_targets.items():
             for imp in imports:
-                target = self._resolve_import_to_module(imp, module_import_targets.keys())
+                target = self._resolve_import_to_module(imp, known_modules)
                 if target:
                     self.graph.add_import_edge(src, target)
 

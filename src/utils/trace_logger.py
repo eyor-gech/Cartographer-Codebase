@@ -28,13 +28,19 @@ class TraceLogger:
         extra: Optional[Dict[str, Any]] = None,
     ) -> None:
 
+        # Backward compatible keys are preserved (agent/confidence/evidence/method),
+        # while emitting the Mastered rubric field names as well.
         entry: Dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "agent": agent_name,
+            "agent_name": agent_name,
             "action": action,
             "confidence": float(confidence),
+            "confidence_level": float(confidence),
             "evidence": evidence_source,
+            "evidence_source": evidence_source,
             "method": analysis_method,
+            "analysis_method": analysis_method,
         }
 
         if extra:

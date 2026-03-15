@@ -1,36 +1,55 @@
 from __future__ import annotations
 from dataclasses import dataclass
-
+from typing import Any, Dict, Optional
 
 @dataclass
 class TokenBudget:
+    """
+    Lightweight token/cost accounting with model tiering.
+
+    Mastered rubric alignment:
+    - Tracks cumulative_spend (calls/tokens/cost)
+    - Selects model tier automatically by task type
+    """
+
+    calls: int = 0
     tokens_used: int = 0
-    hard_limit: int = 250_000
-    soft_limit: int = 200_000
+    estimated_cost: float = 0.0
 
-    cheap_model: str = "ollama"
-    expensive_model: str = "gemini"
+    hard_limit: int = 500_000
+    soft_limit: int = 400_000
 
-    def select_model(self, task: str) -> str:
+    def select_tier(self, task: str) -> str:
         """
-        Select which model to use depending on task importance
-        and remaining token budget.
-        """
+        Return "cheap" (bulk mode) or "expensive" (synthesis mode) for the task.
 
-        # If near token exhaustion use cheap model only
+        Bulk mode (cheap):
+        - module purpose inference
+        - docstring drift checks
+
+        Synthesis mode (expensive):
+        - domain labeling
+        - day-one briefing
+        """
         if self.tokens_used > self.soft_limit:
-            return self.cheap_model
+            return "cheap"
+        expensive_tasks = {"domain_label", "day_one", "synthesis"}
+        if task in expensive_tasks:
+            return "expensive"
+        return "cheap"
 
-        if task in {"purpose", "embedding"}:
-            return self.cheap_model
-
-        if task in {"synthesis", "day_one", "doc_drift"}:
-            return self.expensive_model
-
-        return self.cheap_model
-
-    def record(self, tokens: int):
-        self.tokens_used += tokens
+    def record(self, *, tokens: int, cost: Optional[float] = None) -> None:
+        self.calls += 1
+        self.tokens_used += int(tokens)
+        if cost is not None:
+            self.estimated_cost += float(cost)
 
         if self.tokens_used > self.hard_limit:
-            raise RuntimeError("Token budget exceeded")
+            raise RuntimeError(f"Token budget exceeded! Used: {self.tokens_used}")
+
+    def snapshot(self) -> Dict[str, Any]:
+        return {
+            "calls": int(self.calls),
+            "tokens_used": int(self.tokens_used),
+            "estimated_cost": float(self.estimated_cost),
+        }

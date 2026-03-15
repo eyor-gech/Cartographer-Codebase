@@ -9,3 +9,6 @@ lib/
 src/brownfield_cartographer.egg-info/
 .cartography2/
 src/utils/visualization.py
+pre_submission_test.py
+test2.py
+test.py

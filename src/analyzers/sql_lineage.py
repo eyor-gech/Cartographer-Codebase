@@ -3,8 +3,12 @@ from typing import Dict, List, Set, Tuple
 import logging
 import re
 
-import sqlglot
-from sqlglot import expressions as exp
+try:
+    import sqlglot  # type: ignore
+    from sqlglot import expressions as exp  # type: ignore
+except Exception:  # pragma: no cover
+    sqlglot = None  # type: ignore[assignment]
+    exp = None  # type: ignore[assignment]
 
 
 class SQLLineageAnalyzer:
@@ -44,48 +48,61 @@ class SQLLineageAnalyzer:
 
         parsed = None
 
-        for dialect in self.DIALECTS:
-            try:
-                parsed = sqlglot.parse_one(sql, read=dialect, error_level="ignore")
-                if parsed:
-                    break
-            except Exception as exc:
-                self.logger.debug(
-                    "sqlglot parse failed for dialect %s: %s", dialect, exc
-                )
+        if sqlglot is not None and exp is not None:
+            for dialect in self.DIALECTS:
+                try:
+                    parsed = sqlglot.parse_one(sql, read=dialect, error_level="ignore")
+                    if parsed:
+                        break
+                except Exception as exc:
+                    self.logger.debug("sqlglot parse failed for dialect %s: %s", dialect, exc)
 
-        if not parsed:
-            return sources, targets
+        if parsed is not None and exp is not None:
+            # CTE names (avoid counting as physical reads)
+            for cte in parsed.find_all(exp.CTE):
+                name = cte.alias_or_name
+                if name:
+                    ctes.add(name)
 
-        # CTE names (avoid counting as physical reads)
-        for cte in parsed.find_all(exp.CTE):
-            name = cte.alias_or_name
-            if name:
-                ctes.add(name)
+            # Extract source tables
+            for table in parsed.find_all(exp.Table):
+                try:
+                    if table.name and table.name not in ctes:
+                        sources.add(table.name)
+                except Exception:
+                    continue
 
-        # Extract source tables
-        for table in parsed.find_all(exp.Table):
-            try:
-                if table.name and table.name not in ctes:
-                    sources.add(table.name)
-            except Exception:
-                continue
+            # Detect INSERT targets
+            insert = parsed.find(exp.Insert)
+            if insert and insert.this:
+                try:
+                    targets.add(insert.this.name)
+                except Exception:
+                    pass
 
-        # Detect INSERT targets
-        insert = parsed.find(exp.Insert)
-        if insert and insert.this:
-            try:
-                targets.add(insert.this.name)
-            except Exception:
-                pass
-
-        # Detect CREATE TABLE targets
-        create = parsed.find(exp.Create)
-        if create and create.this:
-            try:
-                targets.add(create.this.name)
-            except Exception:
-                pass
+            # Detect CREATE TABLE targets
+            create = parsed.find(exp.Create)
+            if create and create.this:
+                try:
+                    targets.add(create.this.name)
+                except Exception:
+                    pass
+        else:
+            # Deterministic regex fallback when sqlglot is unavailable.
+            for m in re.finditer(r"\\bwith\\s+([\\w\\.\\-`\\\"]+)\\s+as\\s*\\(", sql, flags=re.IGNORECASE):
+                ctes.add(m.group(1).strip("`\""))
+            for m in re.finditer(r"\\bfrom\\s+([\\w\\.\\-`\\\"]+)", sql, flags=re.IGNORECASE):
+                t = m.group(1).strip("`\"")
+                if t and t not in ctes:
+                    sources.add(t)
+            for m in re.finditer(r"\\bjoin\\s+([\\w\\.\\-`\\\"]+)", sql, flags=re.IGNORECASE):
+                t = m.group(1).strip("`\"")
+                if t and t not in ctes:
+                    sources.add(t)
+            for m in re.finditer(r"\\binsert\\s+into\\s+([\\w\\.\\-`\\\"]+)", sql, flags=re.IGNORECASE):
+                targets.add(m.group(1).strip("`\""))
+            for m in re.finditer(r"\\bcreate\\s+table\\s+([\\w\\.\\-`\\\"]+)", sql, flags=re.IGNORECASE):
+                targets.add(m.group(1).strip("`\""))
 
         return sources, targets
 

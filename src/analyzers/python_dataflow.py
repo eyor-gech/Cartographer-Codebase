@@ -6,9 +6,15 @@ from typing import Dict, List, Optional, Tuple
 
 import logging
 import ast
+import json
 
-from tree_sitter import Parser, Node
-from tree_sitter_languages import get_language
+try:
+    from tree_sitter import Parser, Node  # type: ignore
+    from tree_sitter_languages import get_language  # type: ignore
+except Exception:  # pragma: no cover
+    Parser = None  # type: ignore[assignment]
+    Node = object  # type: ignore[assignment]
+    get_language = None  # type: ignore[assignment]
 
 
 @dataclass(frozen=True)
@@ -19,9 +25,11 @@ class LineageEvent:
     source_file: str
     line_range: List[int]
     dynamic_reference: bool
+    line_number: Optional[int] = None
+    unresolved_expression: Optional[str] = None
 
     def to_dict(self) -> Dict:
-        return {
+        payload = {
             "source_datasets": self.source_datasets,
             "target_datasets": self.target_datasets,
             "transformation_type": self.transformation_type,
@@ -29,6 +37,11 @@ class LineageEvent:
             "line_range": self.line_range,
             "dynamic_reference": self.dynamic_reference,
         }
+        if self.line_number is not None:
+            payload["line_number"] = int(self.line_number)
+        if self.unresolved_expression is not None:
+            payload["unresolved_expression"] = str(self.unresolved_expression)
+        return payload
 
 
 class PythonDataflowAnalyzer:
@@ -51,10 +64,11 @@ class PythonDataflowAnalyzer:
         self.logger = logging.getLogger(__name__)
         self._parser: Optional[Parser] = None
         try:
-            lang = get_language("python")
-            parser = Parser()
-            parser.set_language(lang)
-            self._parser = parser
+            if Parser is not None and get_language is not None:
+                lang = get_language("python")
+                parser = Parser()
+                parser.set_language(lang)
+                self._parser = parser
         except Exception as exc:
             # Keep analyzer usable even if tree-sitter bindings are incompatible in the runtime.
             self.logger.warning("PythonDataflow falling back to ast module: %s", exc)
@@ -105,6 +119,12 @@ class PythonDataflowAnalyzer:
             # Mirror the tree-sitter heuristics with best-effort extraction.
             arg0, dynamic = self._ast_first_arg(node)
             if any(call_name.endswith(s) for s in self.PANDAS_READ_SUFFIXES):
+                self._log_dynamic(
+                    source_file=rel_path,
+                    line_number=start_line,
+                    unresolved_expression=arg0 if dynamic else None,
+                    dynamic=dynamic,
+                )
                 out.append(
                     LineageEvent(
                         source_datasets=[arg0] if arg0 else [],
@@ -113,9 +133,17 @@ class PythonDataflowAnalyzer:
                         source_file=rel_path,
                         line_range=[start_line, end_line],
                         dynamic_reference=dynamic,
+                        line_number=start_line if dynamic else None,
+                        unresolved_expression=arg0 if dynamic else None,
                     )
                 )
             elif call_name.endswith(".to_sql") or call_name.endswith(".to_parquet"):
+                self._log_dynamic(
+                    source_file=rel_path,
+                    line_number=start_line,
+                    unresolved_expression=arg0 if dynamic else None,
+                    dynamic=dynamic,
+                )
                 out.append(
                     LineageEvent(
                         source_datasets=[],
@@ -124,9 +152,17 @@ class PythonDataflowAnalyzer:
                         source_file=rel_path,
                         line_range=[start_line, end_line],
                         dynamic_reference=dynamic,
+                        line_number=start_line if dynamic else None,
+                        unresolved_expression=arg0 if dynamic else None,
                     )
                 )
             elif call_name.startswith(f"{self.SPARK_READ_PREFIX}."):
+                self._log_dynamic(
+                    source_file=rel_path,
+                    line_number=start_line,
+                    unresolved_expression=arg0 if dynamic else None,
+                    dynamic=dynamic,
+                )
                 out.append(
                     LineageEvent(
                         source_datasets=[arg0] if arg0 else [],
@@ -135,9 +171,17 @@ class PythonDataflowAnalyzer:
                         source_file=rel_path,
                         line_range=[start_line, end_line],
                         dynamic_reference=dynamic,
+                        line_number=start_line if dynamic else None,
+                        unresolved_expression=arg0 if dynamic else None,
                     )
                 )
             elif f".{self.SPARK_WRITE_ATTR}." in call_name:
+                self._log_dynamic(
+                    source_file=rel_path,
+                    line_number=start_line,
+                    unresolved_expression=arg0 if dynamic else None,
+                    dynamic=dynamic,
+                )
                 out.append(
                     LineageEvent(
                         source_datasets=[],
@@ -146,6 +190,8 @@ class PythonDataflowAnalyzer:
                         source_file=rel_path,
                         line_range=[start_line, end_line],
                         dynamic_reference=dynamic,
+                        line_number=start_line if dynamic else None,
+                        unresolved_expression=arg0 if dynamic else None,
                     )
                 )
             elif call_name.endswith(".execute"):
@@ -160,6 +206,13 @@ class PythonDataflowAnalyzer:
                             line_range=[start_line, end_line],
                             dynamic_reference=dynamic,
                         )
+                    )
+                else:
+                    self._log_dynamic(
+                        source_file=rel_path,
+                        line_number=start_line,
+                        unresolved_expression=arg0 if dynamic else None,
+                        dynamic=dynamic,
                     )
         return out
 
@@ -200,7 +253,12 @@ class PythonDataflowAnalyzer:
         if any(call_name.endswith(s) for s in self.PANDAS_READ_SUFFIXES):
             dataset, dynamic = self._first_arg_dataset(args, content)
             srcs = [dataset] if dataset else []
-            self._log_dynamic(rel_path, call_name, dataset, dynamic)
+            self._log_dynamic(
+                source_file=rel_path,
+                line_number=start_line,
+                unresolved_expression=dataset if dynamic else None,
+                dynamic=dynamic,
+            )
             return LineageEvent(
                 source_datasets=srcs,
                 target_datasets=[],
@@ -208,13 +266,20 @@ class PythonDataflowAnalyzer:
                 source_file=rel_path,
                 line_range=[start_line, end_line],
                 dynamic_reference=dynamic,
+                line_number=start_line if dynamic else None,
+                unresolved_expression=dataset if dynamic else None,
             )
 
         # pandas writes (to_sql/to_parquet) called on a df instance; tree-sitter won't tell us it's a DataFrame.
         if call_name.endswith(".to_sql"):
             dataset, dynamic = self._first_arg_dataset(args, content)
             tgts = [dataset] if dataset else []
-            self._log_dynamic(rel_path, call_name, dataset, dynamic)
+            self._log_dynamic(
+                source_file=rel_path,
+                line_number=start_line,
+                unresolved_expression=dataset if dynamic else None,
+                dynamic=dynamic,
+            )
             return LineageEvent(
                 source_datasets=[],
                 target_datasets=tgts,
@@ -222,12 +287,19 @@ class PythonDataflowAnalyzer:
                 source_file=rel_path,
                 line_range=[start_line, end_line],
                 dynamic_reference=dynamic,
+                line_number=start_line if dynamic else None,
+                unresolved_expression=dataset if dynamic else None,
             )
 
         if call_name.endswith(".to_parquet"):
             dataset, dynamic = self._first_arg_dataset(args, content)
             tgts = [dataset] if dataset else []
-            self._log_dynamic(rel_path, call_name, dataset, dynamic)
+            self._log_dynamic(
+                source_file=rel_path,
+                line_number=start_line,
+                unresolved_expression=dataset if dynamic else None,
+                dynamic=dynamic,
+            )
             return LineageEvent(
                 source_datasets=[],
                 target_datasets=tgts,
@@ -235,13 +307,20 @@ class PythonDataflowAnalyzer:
                 source_file=rel_path,
                 line_range=[start_line, end_line],
                 dynamic_reference=dynamic,
+                line_number=start_line if dynamic else None,
+                unresolved_expression=dataset if dynamic else None,
             )
 
         # spark.read.csv / spark.read.parquet
         if call_name.startswith(f"{self.SPARK_READ_PREFIX}."):
             dataset, dynamic = self._first_arg_dataset(args, content)
             srcs = [dataset] if dataset else []
-            self._log_dynamic(rel_path, call_name, dataset, dynamic)
+            self._log_dynamic(
+                source_file=rel_path,
+                line_number=start_line,
+                unresolved_expression=dataset if dynamic else None,
+                dynamic=dynamic,
+            )
             return LineageEvent(
                 source_datasets=srcs,
                 target_datasets=[],
@@ -249,13 +328,20 @@ class PythonDataflowAnalyzer:
                 source_file=rel_path,
                 line_range=[start_line, end_line],
                 dynamic_reference=dynamic,
+                line_number=start_line if dynamic else None,
+                unresolved_expression=dataset if dynamic else None,
             )
 
         # spark write patterns: df.write.parquet(...) / df.write.csv(...)
         if f".{self.SPARK_WRITE_ATTR}." in call_name:
             dataset, dynamic = self._first_arg_dataset(args, content)
             tgts = [dataset] if dataset else []
-            self._log_dynamic(rel_path, call_name, dataset, dynamic)
+            self._log_dynamic(
+                source_file=rel_path,
+                line_number=start_line,
+                unresolved_expression=dataset if dynamic else None,
+                dynamic=dynamic,
+            )
             return LineageEvent(
                 source_datasets=[],
                 target_datasets=tgts,
@@ -263,13 +349,20 @@ class PythonDataflowAnalyzer:
                 source_file=rel_path,
                 line_range=[start_line, end_line],
                 dynamic_reference=dynamic,
+                line_number=start_line if dynamic else None,
+                unresolved_expression=dataset if dynamic else None,
             )
 
         # SQLAlchemy execute (SQL literal -> later reconciled by Hydrologist with sqlglot)
         if call_name in self.SQLA_EXECUTE or call_name.endswith(".execute"):
             sql_text, dynamic = self._first_arg_string(args, content)
             if sql_text:
-                self._log_dynamic(rel_path, call_name, "<sql>", dynamic)
+                self._log_dynamic(
+                    source_file=rel_path,
+                    line_number=start_line,
+                    unresolved_expression=sql_text if dynamic else None,
+                    dynamic=dynamic,
+                )
                 return LineageEvent(
                     source_datasets=[sql_text] if not dynamic else [],
                     target_datasets=[],
@@ -277,13 +370,29 @@ class PythonDataflowAnalyzer:
                     source_file=rel_path,
                     line_range=[start_line, end_line],
                     dynamic_reference=dynamic,
+                    line_number=start_line if dynamic else None,
+                    unresolved_expression=sql_text if dynamic else None,
                 )
 
         return None
 
-    def _log_dynamic(self, source_file: str, call_name: str, dataset: Optional[str], dynamic: bool) -> None:
-        if dynamic:
-            self.logger.info("Dynamic dataset reference in %s (%s): %s", source_file, call_name, dataset)
+    def _log_dynamic(
+        self,
+        *,
+        source_file: str,
+        line_number: int,
+        unresolved_expression: Optional[str],
+        dynamic: bool,
+    ) -> None:
+        if not dynamic or not unresolved_expression:
+            return
+        payload = {
+            "source_file": source_file,
+            "line_number": int(line_number or 1),
+            "unresolved_expression": str(unresolved_expression),
+        }
+        # Emit a deterministic, greppable log line with the required fields.
+        self.logger.info("unresolved_dynamic_reference %s", json.dumps(payload, sort_keys=True))
 
     def _first_arg_dataset(self, args: Optional[Node], content: bytes) -> Tuple[Optional[str], bool]:
         value, dynamic = self._first_arg_string(args, content)

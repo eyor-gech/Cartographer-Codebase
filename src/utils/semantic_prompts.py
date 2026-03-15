@@ -2,148 +2,106 @@ PURPOSE_PROMPT = """
 You are a senior software analyst tasked with determining the functional purpose of a software module.
 
 STRICT ANALYSIS RULES
-1. Base your analysis ONLY on executable implementation code.
-2. Completely ignore:
-   - Docstrings
-   - Inline comments
-   - External documentation
-3. Infer intent exclusively from:
-   - Functions and methods
-   - Control flow
-   - Imports and dependencies
-   - Data transformations
-   - I/O behavior
+1. Ignore docstrings. Derive the module purpose strictly from the implementation.
+2. Base your analysis ONLY on executable behavior suggested by the implementation.
+3. Completely ignore inline comments and external documentation.
 4. Do not speculate beyond what the code reasonably implies.
 
-INPUT MODULE
-{code}
+INPUT (implementation-derived signals; docstrings excluded)
+
+Imports:
+{imports}
+
+Function/Class signatures:
+{signatures}
+
+I/O operations (best-effort):
+{io_operations}
+
+Control flow summary:
+{control_flow}
 
 TASK
-Analyze the implementation and infer:
+Infer:
+1) The primary purpose of the module.
+2) The key responsibilities it performs.
 
-1. The primary purpose of the module.
-2. The key responsibilities it performs.
-
-OUTPUT FORMAT
-Return ONLY valid JSON with the following schema:
-
+OUTPUT FORMAT (JSON ONLY)
 {
   "purpose": "Concise description of the module's primary role",
-  "responsibilities": [
-    "Responsibility 1",
-    "Responsibility 2",
-    "Responsibility 3"
-  ],
-  "confidence": <float between 0.0 and 1.0 indicating confidence in the inference>
+  "responsibilities": ["...", "..."],
+  "confidence": 0.0
 }
-
-OUTPUT RULES
-- No explanations.
-- No markdown.
-- No additional text outside JSON.
-- Ensure the JSON is syntactically valid.
 """
 
 DRIFT_PROMPT = """
 You are a software documentation auditor.
 
-Your task is to verify whether a module's docstring accurately reflects the actual implementation.
+Compare an existing module docstring against the module's actual implementation-derived purpose.
 
-ANALYSIS RULES
-1. Treat the docstring as the documented intent.
-2. Treat the implementation code as the ground truth.
-3. Ignore all comments except the provided docstring.
-4. Detect any inconsistencies between documentation and behavior.
-
-WHAT COUNTS AS DOCUMENTATION DRIFT
-- The docstring describes functionality that the code does not implement.
-- The code implements behavior not mentioned in the docstring.
-- The described inputs, outputs, or side effects differ from the implementation.
-- The described responsibilities conflict with actual behavior.
+RULES
+1. Treat the docstring as the documented claims.
+2. Treat the implementation-derived purpose as ground truth.
+3. Return contradictions with evidence using ONLY the provided evidence list.
 
 INPUT
+Module path:
+{module_path}
 
-Docstring:
+Existing docstring (verbatim):
 {docstring}
 
-Implementation:
-{code}
+Implementation-derived purpose (ground truth):
+{purpose}
 
-TASK
-Determine whether documentation drift exists and identify the signals that indicate it.
+Evidence list (choose from these strings):
+{evidence_list}
 
-OUTPUT FORMAT
-Return ONLY valid JSON using the following schema:
-
+OUTPUT FORMAT (JSON ONLY)
 {
-  "drift_detected": <true or false>,
+  "detected": true,
   "severity": "low | medium | high",
-  "contradicting_signals": [
-    "Specific mismatch between documentation and implementation"
+  "contradictions": [
+    { "docstring_claim": "...", "code_behavior": "...", "evidence": "file.py:line" }
   ]
 }
+"""
 
-SEVERITY GUIDELINES
-- low: minor omissions or wording mismatches
-- medium: partial behavioral mismatch
-- high: major contradiction or misleading documentation
+DOMAIN_LABEL_PROMPT = """
+You are labeling clusters of module purposes into meaningful business domains.
 
-OUTPUT RULES
-- Do not include explanations outside the JSON.
-- Do not include markdown.
-- Ensure the JSON is syntactically valid.
+RULES
+1. Provide a short business-domain label (2-5 words).
+2. Do NOT use generic labels like "Miscellaneous" or "Utility".
+3. The label must be derived from the cluster purposes.
+
+Cluster purposes:
+{purposes}
+
+OUTPUT FORMAT (JSON ONLY)
+{ "label": "..." }
 """
 
 DAY_ONE_PROMPT = """
-You are preparing a Day-1 technical briefing for a new engineer joining a software project.
+You are preparing a Day-1 technical briefing for a Forward Deployed Engineer.
 
-Your goal is to summarize the system at a high level so the engineer can quickly understand
-what the system does and where to start reading the code.
+Your goal is to answer five Day-1 questions with citations.
 
-INPUTS
+INPUTS (precomputed from upstream graphs; do not invent)
 
-Module purposes:
-{purposes}
+Critical modules (with citations):
+{critical_modules}
 
-Data sources:
+Primary data sources (with citations):
 {sources}
 
-Data sinks:
+Primary data sinks (with citations):
 {sinks}
 
-ANALYSIS GUIDELINES
-1. Infer the overall system objective from the collection of module purposes.
-2. Identify critical modules as those that:
-   - Orchestrate workflows
-   - Connect major subsystems
-   - Handle core business logic
-   - Manage primary data ingestion or output
-3. Determine a recommended reading order that helps a new engineer understand the system
-   incrementally (entry points → orchestration → core logic → utilities).
-4. Summarize the high-level data flow from sources through processing modules to sinks.
-
-TASK
-Produce a concise onboarding summary for the engineer.
-
-OUTPUT FORMAT
-Return ONLY valid JSON with the following schema:
-
+OUTPUT FORMAT (JSON ONLY)
 {
-  "system_purpose": "High-level description of what the overall system does",
-  "critical_modules": [
-    "module_name_1",
-    "module_name_2"
-  ],
-  "recommended_reading_order": [
-    "module_name_1",
-    "module_name_2"
-  ],
-  "data_flow_summary": "Brief explanation of how data moves through the system"
+  "questions": [
+    { "question": "...", "answer": "...", "citations": ["file.py:line"] }
+  ]
 }
-
-OUTPUT RULES
-- No explanations outside the JSON.
-- Do not include markdown.
-- Ensure the JSON is syntactically valid.
-- Be concise and practical for onboarding.
 """

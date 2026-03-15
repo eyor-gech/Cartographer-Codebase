@@ -1,10 +1,19 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 import logging
-import sqlglot
 import yaml
-from tree_sitter import Parser
-from tree_sitter_languages import get_language
+
+try:
+    import sqlglot  # type: ignore
+except Exception:  # pragma: no cover
+    sqlglot = None  # type: ignore[assignment]
+
+try:
+    from tree_sitter import Parser  # type: ignore
+    from tree_sitter_languages import get_language  # type: ignore
+except Exception:  # pragma: no cover
+    Parser = None  # type: ignore[assignment]
+    get_language = None  # type: ignore[assignment]
 
 SUPPORTED_EXTENSIONS = {
     ".py": "python",
@@ -23,6 +32,8 @@ class LanguageRouter:
         self.parsers = {}
         for ext, lang_name in SUPPORTED_EXTENSIONS.items():
             try:
+                if Parser is None or get_language is None:
+                    continue
                 lang = get_language(lang_name)
                 parser = Parser()
                 parser.set_language(lang)
@@ -45,7 +56,29 @@ class TreeSitterAnalyzer:
     def analyze_python(self, path: Path, content: bytes) -> Dict:
         parser = self.router.get_parser(path)
         if not parser:
-            return {}
+            # Deterministic fallback: minimal AST extraction of imports/defs.
+            try:
+                import ast
+
+                tree = ast.parse(content.decode("utf-8", errors="ignore"))
+                imports: List[str] = []
+                functions: List[str] = []
+                classes: List[str] = []
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Import):
+                        for a in node.names:
+                            imports.append(f"import {a.name}" + (f" as {a.asname}" if a.asname else ""))
+                    elif isinstance(node, ast.ImportFrom):
+                        mod = node.module or ""
+                        names = ", ".join(a.name for a in node.names)
+                        imports.append(f"from {mod} import {names}".strip())
+                    elif isinstance(node, ast.FunctionDef):
+                        functions.append(node.name)
+                    elif isinstance(node, ast.ClassDef):
+                        classes.append(node.name)
+                return {"imports": imports, "functions": functions, "classes": classes}
+            except Exception:
+                return {}
         tree = parser.parse(content)
         root = tree.root_node
         imports: List[str] = []
@@ -111,7 +144,8 @@ class TreeSitterAnalyzer:
         ctes = set()
         parsed = None
         try:
-            parsed = sqlglot.parse_one(sql_text, error_level="ignore")
+            if sqlglot is not None:
+                parsed = sqlglot.parse_one(sql_text, error_level="ignore")
             if parsed:
                 for table in parsed.find_all(sqlglot.exp.Table):
                     if table.this:
@@ -129,13 +163,29 @@ class TreeSitterAnalyzer:
             self.logger.error("SQL parse failure for %s: %s", path, exc)
 
         # dbt ref() detection
-        if parsed:
+        if parsed and sqlglot is not None:
             for ref in parsed.find_all(sqlglot.exp.Func):
                 if getattr(ref, "name", "").lower() == "ref":
                     args = ref.expressions
                     if args:
                         arg = args[0]
                         tables_read.add(arg.name if hasattr(arg, "name") else arg.sql())
+
+        if sqlglot is None or not parsed:
+            # Regex fallback (best-effort) when sqlglot is unavailable.
+            import re
+
+            for m in re.finditer(r"\\bfrom\\s+([\\w\\.\\-`\\\"]+)", sql_text, flags=re.IGNORECASE):
+                tables_read.add(m.group(1).strip("`\""))
+            for m in re.finditer(r"\\bjoin\\s+([\\w\\.\\-`\\\"]+)", sql_text, flags=re.IGNORECASE):
+                tables_read.add(m.group(1).strip("`\""))
+            for m in re.finditer(r"\\bwith\\s+([\\w\\.\\-`\\\"]+)\\s+as\\s*\\(", sql_text, flags=re.IGNORECASE):
+                ctes.add(m.group(1).strip("`\""))
+            for m in re.finditer(r"\\binsert\\s+into\\s+([\\w\\.\\-`\\\"]+)", sql_text, flags=re.IGNORECASE):
+                tables_written.add(m.group(1).strip("`\""))
+            for m in re.finditer(r"\\bcreate\\s+table\\s+([\\w\\.\\-`\\\"]+)", sql_text, flags=re.IGNORECASE):
+                tables_written.add(m.group(1).strip("`\""))
+            tables_read = {t for t in tables_read if t and t not in ctes}
 
         return {
             "type": "sql",
