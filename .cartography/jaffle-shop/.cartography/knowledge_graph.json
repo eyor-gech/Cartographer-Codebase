@@ -1,0 +1,813 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "module",
+      "path": ".github\\workflows\\scripts\\dbt_cloud_run_job.py",
+      "language": "python",
+      "complexity_score": 6.0,
+      "change_velocity_30d": 0,
+      "pagerank": 1.0,
+      "betweenness": 0.0,
+      "is_dead_code_candidate": true,
+      "last_modified": "1773234955.3150513",
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": ".github\\workflows\\scripts\\dbt_cloud_run_job.py"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "stg_customers"
+      ],
+      "target_datasets": [
+        "customers"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\customers.sql",
+      "line_range": [
+        1,
+        59
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\marts\\customers.sql:0"
+    },
+    {
+      "type": "dataset",
+      "name": "stg_customers",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "stg_customers"
+    },
+    {
+      "type": "dataset",
+      "name": "customers",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "customers"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "stg_locations"
+      ],
+      "target_datasets": [
+        "locations"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\locations.sql",
+      "line_range": [
+        1,
+        10
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\marts\\locations.sql:1"
+    },
+    {
+      "type": "dataset",
+      "name": "stg_locations",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "stg_locations"
+    },
+    {
+      "type": "dataset",
+      "name": "locations",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "locations"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [],
+      "target_datasets": [
+        "metricflow_time_spine"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\metricflow_time_spine.sql",
+      "line_range": [
+        1,
+        20
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\marts\\metricflow_time_spine.sql:2"
+    },
+    {
+      "type": "dataset",
+      "name": "metricflow_time_spine",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "metricflow_time_spine"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "stg_orders"
+      ],
+      "target_datasets": [
+        "orders"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\orders.sql",
+      "line_range": [
+        1,
+        78
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\marts\\orders.sql:3"
+    },
+    {
+      "type": "dataset",
+      "name": "stg_orders",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "stg_orders"
+    },
+    {
+      "type": "dataset",
+      "name": "orders",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "orders"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "stg_order_items",
+        "stg_orders",
+        "stg_products",
+        "stg_supplies"
+      ],
+      "target_datasets": [
+        "order_items"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\order_items.sql",
+      "line_range": [
+        1,
+        67
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\marts\\order_items.sql:4"
+    },
+    {
+      "type": "dataset",
+      "name": "stg_order_items",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "stg_order_items"
+    },
+    {
+      "type": "dataset",
+      "name": "stg_products",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "stg_products"
+    },
+    {
+      "type": "dataset",
+      "name": "stg_supplies",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "stg_supplies"
+    },
+    {
+      "type": "dataset",
+      "name": "order_items",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "order_items"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "stg_products"
+      ],
+      "target_datasets": [
+        "products"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\products.sql",
+      "line_range": [
+        1,
+        10
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\marts\\products.sql:5"
+    },
+    {
+      "type": "dataset",
+      "name": "products",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "products"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "stg_supplies"
+      ],
+      "target_datasets": [
+        "supplies"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\supplies.sql",
+      "line_range": [
+        1,
+        10
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\marts\\supplies.sql:6"
+    },
+    {
+      "type": "dataset",
+      "name": "supplies",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "supplies"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "raw_customers"
+      ],
+      "target_datasets": [
+        "stg_customers"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_customers.sql",
+      "line_range": [
+        1,
+        24
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\staging\\stg_customers.sql:7"
+    },
+    {
+      "type": "dataset",
+      "name": "raw_customers",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "raw_customers"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "raw_stores"
+      ],
+      "target_datasets": [
+        "stg_locations"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_locations.sql",
+      "line_range": [
+        1,
+        30
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\staging\\stg_locations.sql:8"
+    },
+    {
+      "type": "dataset",
+      "name": "raw_stores",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "raw_stores"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "raw_orders"
+      ],
+      "target_datasets": [
+        "stg_orders"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_orders.sql",
+      "line_range": [
+        1,
+        34
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\staging\\stg_orders.sql:9"
+    },
+    {
+      "type": "dataset",
+      "name": "raw_orders",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "raw_orders"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "raw_items"
+      ],
+      "target_datasets": [
+        "stg_order_items"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_order_items.sql",
+      "line_range": [
+        1,
+        23
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\staging\\stg_order_items.sql:10"
+    },
+    {
+      "type": "dataset",
+      "name": "raw_items",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "raw_items"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "raw_products"
+      ],
+      "target_datasets": [
+        "stg_products"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_products.sql",
+      "line_range": [
+        1,
+        35
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\staging\\stg_products.sql:11"
+    },
+    {
+      "type": "dataset",
+      "name": "raw_products",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "raw_products"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "raw_supplies"
+      ],
+      "target_datasets": [
+        "stg_supplies"
+      ],
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_supplies.sql",
+      "line_range": [
+        1,
+        32
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:models\\staging\\stg_supplies.sql:12"
+    },
+    {
+      "type": "dataset",
+      "name": "raw_supplies",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "raw_supplies"
+    }
+  ],
+  "edges": [
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\customers.sql",
+      "line_range": [
+        1,
+        59
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\customers.sql:0",
+      "target": "stg_customers"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\customers.sql",
+      "line_range": [
+        1,
+        59
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\customers.sql:0",
+      "target": "customers"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\locations.sql",
+      "line_range": [
+        1,
+        10
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\locations.sql:1",
+      "target": "stg_locations"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\locations.sql",
+      "line_range": [
+        1,
+        10
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\locations.sql:1",
+      "target": "locations"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\metricflow_time_spine.sql",
+      "line_range": [
+        1,
+        20
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\metricflow_time_spine.sql:2",
+      "target": "metricflow_time_spine"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\orders.sql",
+      "line_range": [
+        1,
+        78
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\orders.sql:3",
+      "target": "stg_orders"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\orders.sql",
+      "line_range": [
+        1,
+        78
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\orders.sql:3",
+      "target": "orders"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\order_items.sql",
+      "line_range": [
+        1,
+        67
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\order_items.sql:4",
+      "target": "stg_order_items"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\order_items.sql",
+      "line_range": [
+        1,
+        67
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\order_items.sql:4",
+      "target": "stg_orders"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\order_items.sql",
+      "line_range": [
+        1,
+        67
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\order_items.sql:4",
+      "target": "stg_products"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\order_items.sql",
+      "line_range": [
+        1,
+        67
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\order_items.sql:4",
+      "target": "stg_supplies"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\order_items.sql",
+      "line_range": [
+        1,
+        67
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\order_items.sql:4",
+      "target": "order_items"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\products.sql",
+      "line_range": [
+        1,
+        10
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\products.sql:5",
+      "target": "stg_products"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\products.sql",
+      "line_range": [
+        1,
+        10
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\products.sql:5",
+      "target": "products"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\supplies.sql",
+      "line_range": [
+        1,
+        10
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\supplies.sql:6",
+      "target": "stg_supplies"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\marts\\supplies.sql",
+      "line_range": [
+        1,
+        10
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\marts\\supplies.sql:6",
+      "target": "supplies"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_customers.sql",
+      "line_range": [
+        1,
+        24
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_customers.sql:7",
+      "target": "raw_customers"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_customers.sql",
+      "line_range": [
+        1,
+        24
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_customers.sql:7",
+      "target": "stg_customers"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_locations.sql",
+      "line_range": [
+        1,
+        30
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_locations.sql:8",
+      "target": "raw_stores"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_locations.sql",
+      "line_range": [
+        1,
+        30
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_locations.sql:8",
+      "target": "stg_locations"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_orders.sql",
+      "line_range": [
+        1,
+        34
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_orders.sql:9",
+      "target": "raw_orders"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_orders.sql",
+      "line_range": [
+        1,
+        34
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_orders.sql:9",
+      "target": "stg_orders"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_order_items.sql",
+      "line_range": [
+        1,
+        23
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_order_items.sql:10",
+      "target": "raw_items"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_order_items.sql",
+      "line_range": [
+        1,
+        23
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_order_items.sql:10",
+      "target": "stg_order_items"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_products.sql",
+      "line_range": [
+        1,
+        35
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_products.sql:11",
+      "target": "raw_products"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_products.sql",
+      "line_range": [
+        1,
+        35
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_products.sql:11",
+      "target": "stg_products"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_supplies.sql",
+      "line_range": [
+        1,
+        32
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_supplies.sql:12",
+      "target": "raw_supplies"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "models\\staging\\stg_supplies.sql",
+      "line_range": [
+        1,
+        32
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:models\\staging\\stg_supplies.sql:12",
+      "target": "stg_supplies"
+    }
+  ],
+  "graph_kind": "knowledge"
+}

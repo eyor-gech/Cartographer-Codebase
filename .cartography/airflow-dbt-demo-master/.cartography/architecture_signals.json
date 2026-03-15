@@ -1,0 +1,41 @@
+{
+  "critical_modules": [
+    {
+      "node": "include\\dbt_dag_parser.py",
+      "pagerank": 0.381443415105606,
+      "betweenness": 0.0,
+      "change_velocity": 0,
+      "importance_score": 0.190721707552803
+    },
+    {
+      "node": "dags\\dbt_advanced.py",
+      "pagerank": 0.20618552829813136,
+      "betweenness": 0.0,
+      "change_velocity": 0,
+      "importance_score": 0.10309276414906568
+    },
+    {
+      "node": "dags\\dbt_advanced_utility.py",
+      "pagerank": 0.20618552829813136,
+      "betweenness": 0.0,
+      "change_velocity": 0,
+      "importance_score": 0.10309276414906568
+    },
+    {
+      "node": "dags\\dbt_basic.py",
+      "pagerank": 0.20618552829813136,
+      "betweenness": 0.0,
+      "change_velocity": 0,
+      "importance_score": 0.10309276414906568
+    }
+  ],
+  "risk_modules": [],
+  "dead_code_candidates": [
+    "dags\\dbt_advanced.py"
+  ],
+  "dead_code_candidates_v2": [
+    "dags\\dbt_advanced.py",
+    "dags\\dbt_advanced_utility.py",
+    "dags\\dbt_basic.py"
+  ]
+}

@@ -1,0 +1,430 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "module",
+      "path": "dags\\dbt_advanced.py",
+      "language": "python",
+      "complexity_score": 6.0,
+      "change_velocity_30d": 0,
+      "pagerank": 0.20618552829813136,
+      "betweenness": 0.0,
+      "is_dead_code_candidate": true,
+      "last_modified": "1773513605.3479006",
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "dags\\dbt_advanced.py"
+    },
+    {
+      "type": "module",
+      "path": "dags\\dbt_advanced_utility.py",
+      "language": "python",
+      "complexity_score": 5.0,
+      "change_velocity_30d": 0,
+      "pagerank": 0.20618552829813136,
+      "betweenness": 0.0,
+      "is_dead_code_candidate": false,
+      "last_modified": "1773513605.396868",
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "dags\\dbt_advanced_utility.py"
+    },
+    {
+      "type": "module",
+      "path": "dags\\dbt_basic.py",
+      "language": "python",
+      "complexity_score": 3.0,
+      "change_velocity_30d": 0,
+      "pagerank": 0.20618552829813136,
+      "betweenness": 0.0,
+      "is_dead_code_candidate": false,
+      "last_modified": "1773513605.4502182",
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "dags\\dbt_basic.py"
+    },
+    {
+      "type": "module",
+      "path": "include\\dbt_dag_parser.py",
+      "language": "python",
+      "complexity_score": 13.0,
+      "change_velocity_30d": 0,
+      "pagerank": 0.381443415105606,
+      "betweenness": 0.0,
+      "is_dead_code_candidate": false,
+      "last_modified": "1773513607.502034",
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "include\\dbt_dag_parser.py"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "stg_customers",
+        "stg_orders",
+        "stg_payments"
+      ],
+      "target_datasets": [
+        "customers"
+      ],
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\customers.sql",
+      "line_range": [
+        1,
+        67
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:dbt\\models\\customers.sql:0"
+    },
+    {
+      "type": "dataset",
+      "name": "stg_customers",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "stg_customers"
+    },
+    {
+      "type": "dataset",
+      "name": "stg_orders",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "stg_orders"
+    },
+    {
+      "type": "dataset",
+      "name": "stg_payments",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "stg_payments"
+    },
+    {
+      "type": "dataset",
+      "name": "customers",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "customers"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "raw_customers"
+      ],
+      "target_datasets": [
+        "stg_customers"
+      ],
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\staging\\stg_customers.sql",
+      "line_range": [
+        1,
+        23
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:dbt\\models\\staging\\stg_customers.sql:1"
+    },
+    {
+      "type": "dataset",
+      "name": "raw_customers",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "raw_customers"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "raw_orders"
+      ],
+      "target_datasets": [
+        "stg_orders"
+      ],
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\staging\\stg_orders.sql",
+      "line_range": [
+        1,
+        24
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:dbt\\models\\staging\\stg_orders.sql:2"
+    },
+    {
+      "type": "dataset",
+      "name": "raw_orders",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "raw_orders"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "raw_payments"
+      ],
+      "target_datasets": [
+        "stg_payments"
+      ],
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\staging\\stg_payments.sql",
+      "line_range": [
+        1,
+        26
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:sql:dbt\\models\\staging\\stg_payments.sql:3"
+    },
+    {
+      "type": "dataset",
+      "name": "raw_payments",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "raw_payments"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "customers"
+      ],
+      "target_datasets": [
+        "customers"
+      ],
+      "transformation_type": "config",
+      "source_file": "dbt\\models\\schema.yml",
+      "line_range": [
+        1,
+        83
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:config:dbt\\models\\schema.yml:4"
+    },
+    {
+      "type": "transformation",
+      "source_datasets": [
+        "customers"
+      ],
+      "target_datasets": [
+        "orders"
+      ],
+      "transformation_type": "config",
+      "source_file": "dbt\\models\\schema.yml",
+      "line_range": [
+        1,
+        83
+      ],
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "transform:config:dbt\\models\\schema.yml:5"
+    },
+    {
+      "type": "dataset",
+      "name": "orders",
+      "storage_type": "table",
+      "schema_snapshot": null,
+      "owner": null,
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "id": "orders"
+    }
+  ],
+  "edges": [
+    {
+      "type": "imports",
+      "source": "dags\\dbt_advanced_utility.py",
+      "target": "include\\dbt_dag_parser.py"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\customers.sql",
+      "line_range": [
+        1,
+        67
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:dbt\\models\\customers.sql:0",
+      "target": "stg_customers"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\customers.sql",
+      "line_range": [
+        1,
+        67
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:dbt\\models\\customers.sql:0",
+      "target": "stg_orders"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\customers.sql",
+      "line_range": [
+        1,
+        67
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:dbt\\models\\customers.sql:0",
+      "target": "stg_payments"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\customers.sql",
+      "line_range": [
+        1,
+        67
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:dbt\\models\\customers.sql:0",
+      "target": "customers"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\staging\\stg_customers.sql",
+      "line_range": [
+        1,
+        23
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:dbt\\models\\staging\\stg_customers.sql:1",
+      "target": "raw_customers"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\staging\\stg_customers.sql",
+      "line_range": [
+        1,
+        23
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:dbt\\models\\staging\\stg_customers.sql:1",
+      "target": "stg_customers"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\staging\\stg_orders.sql",
+      "line_range": [
+        1,
+        24
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:dbt\\models\\staging\\stg_orders.sql:2",
+      "target": "raw_orders"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\staging\\stg_orders.sql",
+      "line_range": [
+        1,
+        24
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:dbt\\models\\staging\\stg_orders.sql:2",
+      "target": "stg_orders"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\staging\\stg_payments.sql",
+      "line_range": [
+        1,
+        26
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:dbt\\models\\staging\\stg_payments.sql:3",
+      "target": "raw_payments"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "sql",
+      "source_file": "dbt\\models\\staging\\stg_payments.sql",
+      "line_range": [
+        1,
+        26
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:sql:dbt\\models\\staging\\stg_payments.sql:3",
+      "target": "stg_payments"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "config",
+      "source_file": "dbt\\models\\schema.yml",
+      "line_range": [
+        1,
+        83
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:config:dbt\\models\\schema.yml:4",
+      "target": "customers"
+    },
+    {
+      "type": "consumes",
+      "transformation_type": "config",
+      "source_file": "dbt\\models\\schema.yml",
+      "line_range": [
+        1,
+        83
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:config:dbt\\models\\schema.yml:5",
+      "target": "customers"
+    },
+    {
+      "type": "produces",
+      "transformation_type": "config",
+      "source_file": "dbt\\models\\schema.yml",
+      "line_range": [
+        1,
+        83
+      ],
+      "dynamic_reference": false,
+      "analysis_method": "static",
+      "source": "transform:config:dbt\\models\\schema.yml:5",
+      "target": "orders"
+    }
+  ],
+  "graph_kind": "knowledge"
+}

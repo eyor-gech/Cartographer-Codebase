@@ -1,0 +1,75 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "module",
+      "path": "dags\\dbt_advanced.py",
+      "language": "python",
+      "complexity_score": 6.0,
+      "change_velocity_30d": 0,
+      "pagerank": 0.20618552829813136,
+      "betweenness": 0.0,
+      "is_dead_code_candidate": true,
+      "last_modified": "1773513605.3479006",
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "importance_score": 0.10309276414906568,
+      "id": "dags\\dbt_advanced.py"
+    },
+    {
+      "type": "module",
+      "path": "dags\\dbt_advanced_utility.py",
+      "language": "python",
+      "complexity_score": 5.0,
+      "change_velocity_30d": 0,
+      "pagerank": 0.20618552829813136,
+      "betweenness": 0.0,
+      "is_dead_code_candidate": false,
+      "last_modified": "1773513605.396868",
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "importance_score": 0.10309276414906568,
+      "id": "dags\\dbt_advanced_utility.py"
+    },
+    {
+      "type": "module",
+      "path": "dags\\dbt_basic.py",
+      "language": "python",
+      "complexity_score": 3.0,
+      "change_velocity_30d": 0,
+      "pagerank": 0.20618552829813136,
+      "betweenness": 0.0,
+      "is_dead_code_candidate": false,
+      "last_modified": "1773513605.4502182",
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "importance_score": 0.10309276414906568,
+      "id": "dags\\dbt_basic.py"
+    },
+    {
+      "type": "module",
+      "path": "include\\dbt_dag_parser.py",
+      "language": "python",
+      "complexity_score": 13.0,
+      "change_velocity_30d": 0,
+      "pagerank": 0.381443415105606,
+      "betweenness": 0.0,
+      "is_dead_code_candidate": false,
+      "last_modified": "1773513607.502034",
+      "purpose_statement": null,
+      "domain_cluster": null,
+      "importance_score": 0.190721707552803,
+      "id": "include\\dbt_dag_parser.py"
+    }
+  ],
+  "edges": [
+    {
+      "type": "imports",
+      "source": "dags\\dbt_advanced_utility.py",
+      "target": "include\\dbt_dag_parser.py"
+    }
+  ],
+  "graph_kind": "module"
+}

@@ -1,0 +1,18 @@
+{
+  "critical_modules": [
+    {
+      "node": ".github\\workflows\\scripts\\dbt_cloud_run_job.py",
+      "pagerank": 0.0,
+      "betweenness": 0.0,
+      "change_velocity": 0,
+      "importance_score": 0.0
+    }
+  ],
+  "risk_modules": [],
+  "dead_code_candidates": [
+    ".github\\workflows\\scripts\\dbt_cloud_run_job.py"
+  ],
+  "dead_code_candidates_v2": [
+    ".github\\workflows\\scripts\\dbt_cloud_run_job.py"
+  ]
+}

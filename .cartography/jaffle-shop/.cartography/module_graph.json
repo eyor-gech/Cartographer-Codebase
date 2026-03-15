@@ -7,14 +7,15 @@
       "type": "module",
       "path": ".github\\workflows\\scripts\\dbt_cloud_run_job.py",
       "language": "python",
-      "complexity_score": 0.0,
+      "complexity_score": 6.0,
       "change_velocity_30d": 0,
-      "pagerank": 1.0,
+      "pagerank": 0.0,
       "betweenness": 0.0,
-      "is_dead_code_candidate": false,
+      "is_dead_code_candidate": true,
       "last_modified": "1773234955.3150513",
       "purpose_statement": null,
       "domain_cluster": null,
+      "importance_score": 0.0,
       "id": ".github\\workflows\\scripts\\dbt_cloud_run_job.py"
     }
   ],

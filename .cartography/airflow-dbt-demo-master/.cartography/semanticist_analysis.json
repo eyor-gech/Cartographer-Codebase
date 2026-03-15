@@ -1,0 +1,33 @@
+{
+  "business_domain": "E-commerce Data Warehousing and Customer Analytics",
+  "key_entities": [
+    {
+      "name": "customers",
+      "description": "The primary customer dimension table, aggregating data from staging customers, orders, and payments.",
+      "grain": "One record per unique customer."
+    },
+    {
+      "name": "orders",
+      "description": "The final orders table representing sales transactions, dependent on customer data.",
+      "grain": "One record per order."
+    },
+    {
+      "name": "stg_payments",
+      "description": "A staging layer for raw payment transactions before they are aggregated into customer metrics.",
+      "grain": "One record per payment transaction."
+    }
+  ],
+  "relationships": [
+    "Raw source tables (raw_customers, raw_orders, raw_payments) feed into staging models (stg_).",
+    "The 'customers' mart is derived from the union of staging customers, orders, and payments models.",
+    "The 'orders' mart consumes the 'customers' mart as a dependency for downstream modeling.",
+    "Airflow DAGs (dbt_advanced_utility) import and utilize 'dbt_dag_parser.py' to orchestrate dbt model execution."
+  ],
+  "risks": [
+    {
+      "critical_paths": "The 'include\\dbt_dag_parser.py' module is a single point of failure with high complexity (13.0) and high Pagerank (0.38), indicating it is the core logic for the orchestration layer.",
+      "recommendations": "Investigate 'dags\\dbt_advanced.py' which is flagged as a dead code candidate. Refactor 'dbt_dag_parser.py' to reduce complexity and ensure it has high test coverage."
+    }
+  ],
+  "architecture": "A dbt-based transformation pipeline orchestrated by Apache Airflow. The system follows a standard Medallion-style staging/marts architecture where raw data is cleaned in staging models and aggregated into business entities in the marts layer. Orchestration is managed via Python-based DAGs that use a centralized utility to parse dbt manifests and generate tasks."
+}
