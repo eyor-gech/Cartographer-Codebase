@@ -186,3 +186,6 @@ Planned/Reserved configuration knobs (documented for forward compatibility):
 - OpenAI API (optional integration pattern): https://platform.openai.com/docs
 - Google Gemini API: https://ai.google.dev/
 - FAISS (vector store option): https://github.com/facebookresearch/faiss
+
+**Author**: Eyor Getachew
+TRP
