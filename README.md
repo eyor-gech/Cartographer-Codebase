@@ -1,3 +1,4 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/eyor-gech/Cartographer-Codebase)
 # Brownfield Cartographer
 
 Brownfield Cartographer is a Python CLI that **analyzes an unfamiliar GitHub repository** and turns it into **actionable architecture intelligence** you can query.
